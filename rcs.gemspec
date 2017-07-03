@@ -1,9 +1,9 @@
 lib = File.expand_path('../lib', __FILE__)
 $LOAD_PATH.unshift(lib) unless $LOAD_PATH.include?(lib)
-require 'rcsb_file'
+require 'rcs'
 
 Gem::Specification.new do |spec|
-  spec.name          = "rcsb_file"
+  spec.name          = "rcs"
   spec.version       = Rcs::VERSION
   spec.author        = "Jon Wilkes"
   spec.email         = "jon@pluckeye.net"
