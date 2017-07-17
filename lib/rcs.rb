@@ -1,12 +1,27 @@
 require 'date'
 
 module Rcs
-  VERSION = "0.0.1"
+  VERSION = "0.0.2"
 
   # foo,v -> File
   # foo -> Revision
   # 1.1 -> Number
   # rcsdiff -r1.1 -r1.2 foo -> Diff
+
+  class FailedCommand < RuntimeError
+    attr_accessor :command
+    def initialize(command)
+      @command = command
+    end
+  end
+
+  def self.run(cmd)
+    stdout = `#{cmd}`
+    if 0 != $?.exitstatus && !cmd.start_with?("rcsdiff")
+      raise FailedCommand.new(cmd)
+    end
+    stdout
+   end
 
   # ,v
   class File
@@ -24,7 +39,8 @@ module Rcs
       else
         args = "'" + args.join("' '") + "'"
       end
-      system("rcs ci -l -t-'' #{args} #{revision_path} >/dev/null 2>&1")
+      Rcs::run("rcs ci -q -i -t-'' #{args} #{revision_path}")
+      Rcs::run("rcs -U #{revision_path}")
       new(path)
     end
 
@@ -57,7 +73,7 @@ module Rcs
     end
 
     def initialize(path)
-      @path = path
+      @path = self.class.commav_path(path)
     end
 
     def exist?
@@ -74,7 +90,7 @@ module Rcs
       else
         args = "'" + args.join("' '") + "'"
       end
-      `rcs ci -l -m'' #{args} #{path} 2>/dev/null`
+      Rcs::run("rcs ci -q -j -m'' #{args} #{path}")
       @rlog = nil
       @latest_number = nil
       revision
@@ -93,7 +109,7 @@ module Rcs
     end
 
     def rlog
-      @rlog ||= `rlog -h #{revision_path} 2>/dev/null`
+      @rlog ||= Rcs::run("rlog -h #{revision_path}")
     end
 
     def latest_number
@@ -152,7 +168,7 @@ module Rcs
     def content
       @content ||= cached? ?
         File.read(path) :
-        `rcsdiff -r#{@a.number} -r#{@b.number} #{@args} #{@a.path} 2>/dev/null`
+        Rcs::run("rcsdiff -q -r#{@a.number} -r#{@b.number} #{@args} #{@a.path}")
     end
 
     def cache!
@@ -211,7 +227,7 @@ module Rcs
     def content
       @content ||= cached? ?
         File.read(cache_path) :
-        `rcs co -p#{@number} #{path} 2>/dev/null`
+        Rcs::run("rcs co -p#{@number} #{path}")
     end
 
     def cached?
@@ -280,7 +296,7 @@ module Rcs
     end
 
     def rlog
-      @rlog ||= `rlog -r#{number} #{path} 2>/dev/null`
+      @rlog ||= Rcs::run("rlog -r#{number} #{path}")
     end
   end
 end

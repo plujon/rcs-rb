@@ -43,7 +43,6 @@ describe Rcs do
     Dir.mkdir("#{t}/RCS") unless File.exist? "#{t}/RCS"
     hi = Rcs::File.create("#{t}/RCS/hi,v")
     assert File.exist?("#{t}/RCS/hi,v")
-    assert File.exist?("#{t}/hi")
   end
 
   it "should create a new revision" do
@@ -52,6 +51,5 @@ describe Rcs do
     revision = hi.revision
     assert_equal "yo", revision.content
     assert_equal "1.2", revision.number.to_s
-    assert File.exist?("#{t}/hi")
   end
 end
